@@ -1,5 +1,7 @@
 # LocoInfra
 
+![LocoInfra：人形机器人运动基础模型，数据处理 → 训练 → 部署，全流程开源](docs/assets/cover.jpg)
+
 **人形机器人运动基础模型的全流程工具链：数据处理 → 训练 → 部署。**
 
 > *English summary.* LocoInfra is an end-to-end pipeline for training a humanoid **base motion model** on the 22-DoF Q1 robot: human motion capture (LAFAN1 / AMASS) is retargeted, checked for physical feasibility and repaired, then used to train one controller with [SuperMimic](https://arxiv.org/abs/2610.28480) (a differentiable world model + short-horizon BPTT). The model has two goal encoders sharing one decoder — `E_ref` tracks full reference motions, `E_tele` follows sparse commands (velocity, height, torso tilt, hand positions) — and is exported as ONNX for a standalone 50 Hz runtime. Documentation is in Chinese.
