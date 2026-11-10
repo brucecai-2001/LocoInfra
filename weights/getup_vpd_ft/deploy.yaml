@@ -1,0 +1,47 @@
+robot: q1
+model: q1/q1_v3/xml/q1_v3_collision.xml
+control_hz: 50
+joint_names: [left_hip_pitch_joint, left_hip_roll_joint, left_hip_yaw_joint, left_knee_joint, left_ankle_pitch_joint, left_ankle_roll_joint, right_hip_pitch_joint, right_hip_roll_joint, right_hip_yaw_joint,
+  right_knee_joint, right_ankle_pitch_joint, right_ankle_roll_joint, waist_roll_joint, waist_yaw_joint, left_shoulder_pitch_joint, left_shoulder_roll_joint, left_shoulder_yaw_joint, left_elbow_joint, right_shoulder_pitch_joint,
+  right_shoulder_roll_joint, right_shoulder_yaw_joint, right_elbow_joint]
+default_joint_pos: [-0.2, 0.0, 0.0, 0.4, -0.2, 0.0, -0.2, 0.0, 0.0, 0.4, -0.2, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.3, 0.0, -0.1, 0.0, 0.3]
+action_scale: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+pd:
+  preset: vendor_getup
+  kp: [30.0, 30.0, 30.0, 30.0, 20.0, 20.0, 30.0, 30.0, 30.0, 30.0, 20.0, 20.0, 80.0, 30.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
+  kd: [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 3.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]
+  effort_limit: [35.0, 35.0, 35.0, 35.0, 22.0, 22.0, 35.0, 35.0, 35.0, 35.0, 22.0, 22.0, 35.0, 35.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0]
+policy:
+  file: policy.onnx
+  inputs:
+    obs: [null, 720]
+    goal: [null, 546]
+  outputs:
+    action: [null, 22]
+    joint_target: [null, 22]
+  joint_target: default_joint_pos + action_scale * action（rad），作为 PD 目标
+  normalization: 无：观测缩放已在网络内部，直接喂原始量
+obs:
+  history: 10
+  layout: 按项分块（term-major）：每一项连续放 history 帧，帧顺序从旧到新；回合开始时所有历史帧都填第一帧
+  terms:
+  - {name: joint_pos, dim: 22, unit: rad, desc: 关节编码器角度减默认站姿 q - default_joint_pos}
+  - {name: joint_vel, dim: 22, unit: rad/s, desc: 关节角速度}
+  - {name: base_ang_vel, dim: 3, unit: rad/s, desc: 骨盆 IMU 角速度，骨盆坐标系}
+  - {name: projected_gravity, dim: 3, unit: '1', desc: '骨盆坐标系下的单位重力方向 R_pelvis^T [0, 0, -1]'}
+  - {name: actions, dim: 22, unit: '1', desc: 上一控制周期策略输出的 action（不是关节目标），回合开始为 0}
+goal:
+  future_frames: 10
+  frame_offset: 机器人处在参考第 i 帧（首帧 i = 0）时，喂第 i+1 … i+K 帧，超出末帧用末帧
+  per_frame_features:
+  - {name: joint_pos, dim: 22, desc: 参考关节角减 default_joint_pos}
+  - {name: joint_vel, dim: 22, desc: 参考关节角速度}
+  - {name: projected_gravity, dim: 3, desc: 参考骨盆坐标系下的重力方向}
+  - {name: root_ang_vel_b, dim: 3, desc: 参考骨盆角速度，骨盆坐标系}
+  - {name: root_lin_vel_h, dim: 3, desc: 参考骨盆线速度，参考航向坐标系}
+  - {name: root_height, dim: 1, desc: 参考骨盆高度（m）}
+  precomputed: 'deploy_motion.npz: goal_feat (T, 54)，已按上面顺序算好'
+  anchor_ori: {dim: 6, desc: '接在 K 帧之后：参考躯干（torso_link）相对机器人躯干的旋转 R = R_robot^T R_ref 的前两列，按行展开 [R00, R01, R10, R11, R20, R21]；参考用第 i+1 帧（与第一帧目标同帧）；R_robot 由骨盆 IMU 姿态与腰关节角正运动学得到；开始播放时把参考整体绕 z 轴旋转，使首帧参考躯干航向与机器人当前躯干航向一致（IMU
+      航向无绝对基准）', precomputed: 'deploy_motion.npz: anchor_quat_w (T, 4) wxyz'}
+motion: {file: motion.npz, frames: 455, fps: 50}
+start: '从参考首帧姿态（deploy_motion.npz: joint_pos[0]）缓慢插值到位后开始，last action = 0'

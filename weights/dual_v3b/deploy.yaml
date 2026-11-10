@@ -1,0 +1,128 @@
+robot: q1
+model: scene.xml（训练场景；网格在 q1/q1_v3/meshes）
+control_hz: 50
+joint_names: [left_hip_pitch_joint, left_hip_roll_joint, left_hip_yaw_joint, left_knee_joint, left_ankle_pitch_joint, left_ankle_roll_joint, right_hip_pitch_joint, right_hip_roll_joint, right_hip_yaw_joint,
+  right_knee_joint, right_ankle_pitch_joint, right_ankle_roll_joint, waist_roll_joint, waist_yaw_joint, left_shoulder_pitch_joint, left_shoulder_roll_joint, left_shoulder_yaw_joint, left_elbow_joint, right_shoulder_pitch_joint,
+  right_shoulder_roll_joint, right_shoulder_yaw_joint, right_elbow_joint]
+default_joint_pos: [-0.2, 0.0, 0.0, 0.4, -0.2, 0.0, -0.2, 0.0, 0.0, 0.4, -0.2, 0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.3, 0.0, -0.1, 0.0, 0.3]
+action_scale: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+pd:
+  kp: [80.0, 80.0, 80.0, 80.0, 40.0, 40.0, 80.0, 80.0, 80.0, 80.0, 40.0, 40.0, 60.0, 60.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0]
+  kd: [3.0, 3.0, 3.0, 3.0, 1.5, 1.5, 3.0, 3.0, 3.0, 3.0, 1.5, 1.5, 2.5, 2.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  effort_limit: [35.0, 35.0, 35.0, 35.0, 22.0, 22.0, 35.0, 35.0, 35.0, 35.0, 22.0, 22.0, 35.0, 35.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0]
+obs:
+  history: 10
+  layout: 按项分块（term-major）：每一项连续放 history 帧，帧顺序从旧到新；回合开始时所有历史帧都填第一帧
+  terms:
+  - {name: joint_pos, dim: 22, unit: rad, desc: 关节编码器角度减默认站姿 q - default_joint_pos}
+  - {name: joint_vel, dim: 22, unit: rad/s, desc: 关节角速度}
+  - {name: base_ang_vel, dim: 3, unit: rad/s, desc: 骨盆 IMU 角速度，骨盆坐标系}
+  - {name: projected_gravity, dim: 3, unit: '1', desc: '骨盆坐标系下的单位重力方向 R_pelvis^T [0, 0, -1]'}
+  - {name: actions, dim: 22, unit: '1', desc: 上一控制周期策略输出的 action（不是关节目标），回合开始为 0}
+graphs:
+  ref:
+    file: policy_ref.onnx
+    inputs:
+      obs: [null, 720]
+      body_ref: [null, 222]
+    outputs:
+      action: [null, 22]
+      joint_target: [null, 22]
+      z: [null, 32]
+  tele:
+    file: policy_tele.onnx
+    inputs:
+      obs: [null, 720]
+      slots: [null, 19]
+      mask: [null, 6]
+    outputs:
+      action: [null, 22]
+      joint_target: [null, 22]
+      z: [null, 32]
+  decoder:
+    file: decoder.onnx
+    inputs:
+      obs: [null, 720]
+      z: [null, 32]
+    outputs:
+      action: [null, 22]
+      joint_target: [null, 22]
+  joint_target: default_joint_pos + action_scale * action（rad），作为 PD 目标
+  normalization: 无：观测、body_ref、槽位的缩放都在网络内部，直接喂原始物理量
+  switch: 两个应用切换时，在若干帧内对两个图输出的 z 线性插值，再喂 decoder.onnx（或经站姿过渡）
+body_ref:
+  future_frames: 4
+  frame_offset: 机器人处在参考第 i 帧（首帧 i = 0）时，喂第 i+1 … i+K 帧，超出末帧用末帧
+  per_frame_features:
+  - {name: joint_pos, dim: 22, desc: 参考关节角减 default_joint_pos}
+  - {name: joint_vel, dim: 22, desc: 参考关节角速度}
+  - {name: projected_gravity, dim: 3, desc: 参考骨盆坐标系下的重力方向}
+  - {name: root_ang_vel_b, dim: 3, desc: 参考骨盆角速度，骨盆坐标系}
+  - {name: root_lin_vel_h, dim: 3, desc: 参考骨盆线速度，参考航向坐标系}
+  - {name: root_height, dim: 1, desc: 参考骨盆高度（m）}
+  anchor_ori: {dim: 6, desc: '接在 K 帧之后：参考躯干（torso_link）相对机器人躯干的旋转 R = R_robot^T R_ref 的前两列，按行展开 [R00, R01, R10, R11, R20, R21]；参考用第 i+1 帧（与第一帧目标同帧）；R_robot 由骨盆 IMU 姿态与腰关节角正运动学得到；开始播放时把参考整体绕 z 轴旋转，使首帧参考躯干航向与机器人当前躯干航向一致（IMU
+      航向无绝对基准）'}
+tele:
+  registry:
+    version: 1
+    slot_dim: 19
+    num_slots: 6
+    slots:
+    - name: base
+      offset: 0
+      dim: 3
+      unit: m/s, m/s, rad/s
+      desc: 骨盆在航向系的平面速度 vx（前）/ vy（左），世界系偏航角速度 wz（逆时针为正）
+      default: [0.0, 0.0, 0.0]
+      reserved: false
+    - name: height
+      offset: 3
+      dim: 1
+      unit: m
+      desc: 骨盆离地高度相对标准站姿 H_STAND 的偏移 Δh（下蹲为负）
+      default: [0.0]
+      reserved: false
+    - name: torso
+      offset: 4
+      dim: 3
+      unit: '1'
+      desc: 躯干（torso_link）坐标系下的单位重力方向，只含俯仰 / 侧倾（偏航无关）；前倾 x > 0，右倾 y < 0
+      default: [0.0, 0.0, -1.0]
+      reserved: false
+    - name: hand_L
+      offset: 7
+      dim: 3
+      unit: m
+      desc: 左手（left_wrist_yaw_link 原点）相对头，躯干航向系
+      default: [0.02, 0.135, -0.3]
+      reserved: false
+    - name: hand_R
+      offset: 10
+      dim: 3
+      unit: m
+      desc: 右手（right_wrist_yaw_link 原点）相对头，躯干航向系
+      default: [0.02, -0.135, -0.3]
+      reserved: false
+    - name: feet
+      offset: 13
+      dim: 6
+      unit: m
+      desc: 左、右脚（*_ankle_roll_link 原点）相对头，躯干航向系；预留给腿部 Tracker
+      default: [-0.045, 0.105, -0.76, -0.045, -0.105, -0.76]
+      reserved: true
+    h_stand: 0.434
+    head_offset_in_torso: [0.0, 0.0, 0.2625]
+    mask: 每个槽位 1 位，1 = 有效、0 = 缺失；缺失槽位的数值随意（网络内部乘掩码），预留槽位恒为 0
+  train_range:
+    vx: [-0.6, 1.0]
+    vy: [-0.5, 0.5]
+    wz: [-1.5, 1.5]
+    height: [-0.15, 0.02]
+    torso_pitch_rad: [-0.15, 0.6]
+    torso_roll_rad: [-0.25, 0.25]
+    height_rate_m_s: 0.25
+    hands: 动作库里 tele_ok 帧的手位置（可达范围）
+  adapter: 设备到槽位的映射、死区、低通、限幅、高度变化率限制都在应用层；网络只接收 Q1 尺度、Q1 坐标系下的物理目标
+sim: {timestep: 0.005, integrator: 3, cone: 0, solver: 2, iterations: 10, ls_iterations: 20, foot_friction: 1.0}
+stand_height: 0.434
+start: 从默认站姿开始（骨盆高度 stand_height），last action = 0；遥操作默认 mask 只开 base、其余槽位取默认值。骨盆低于 stand_height + Δh - 0.15 m 或倾角过大视为摔倒

@@ -1,0 +1,29 @@
+.DS_Store
+__pycache__/
+*.pyc
+.ruff_cache/
+.pytest_cache/
+
+# 环境与外部依赖（infra/setup.sh 重建）
+infra/.venv
+infra/.deps
+
+# 数据集、任务目录与动作库（可重新生成）
+infra/data/
+infra/jobs/
+infra/dataset_jobs/
+infra/datasets/
+
+# 训练数据与日志
+infra/SuperMimic-Q1/.venv/
+infra/SuperMimic-Q1/data/
+infra/SuperMimic-Q1/logs/
+
+# 真机录数（不分发）
+q1/motor_id/data/*
+!q1/motor_id/data/.gitignore
+!q1/motor_id/data/synth_passive.npz
+
+# 参考库数据（由应用生成，见 apps/ref/__init__.py）
+apps/ref/*/
+!apps/ref/skills/

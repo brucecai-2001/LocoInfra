@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q1 动作跟踪</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel2: #1e222b; --line: #2a2f3a; --text: #e6e8ee; --dim: #8b93a5;
+    --acc: #5b9cff; --ok: #3ecf8e; --warn: #f5a524; --bad: #f25f5c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { padding: 2px 10px; border-radius: 999px; background: var(--panel2); color: var(--dim); font-size: 12px; border: 1px solid var(--line); }
+  .badge b { color: var(--text); font-weight: 500; }
+  main { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 20px; padding: 20px 24px; align-items: start; }
+  main > * { min-width: 0; }
+  @media (max-width: 960px) { main { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card + .card { margin-top: 16px; }
+  .card h2 { font-size: 14px; margin: 0 0 12px; color: var(--dim); font-weight: 500; letter-spacing: .02em; }
+  .drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 22px 12px; text-align: center; color: var(--dim); cursor: pointer; transition: .15s; }
+  .drop:hover, .drop.over { border-color: var(--acc); color: var(--text); background: #5b9cff10; }
+  .drop input { display: none; }
+  .fname { margin-top: 8px; font-size: 13px; word-break: break-all; }
+  #preview { width: 100%; border-radius: 8px; margin-top: 10px; display: none; background: #000; max-height: 260px; }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .row label { color: var(--dim); font-size: 13px; min-width: 52px; }
+  input[type=number], textarea { width: 100%; background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 6px; padding: 6px 8px; font: inherit; }
+  textarea { resize: vertical; min-height: 92px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chips button { font-size: 12px; padding: 3px 8px; color: var(--dim); }
+  .gen { background: var(--panel2); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 13px; }
+  .gen .k { color: var(--dim); }
+  .chk { display: flex; gap: 8px; align-items: center; margin-top: 8px; color: var(--dim); font-size: 13px; cursor: pointer; }
+  button { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font: inherit; cursor: pointer; white-space: nowrap; }
+  button:hover { border-color: var(--acc); }
+  button.primary { background: var(--acc); border-color: var(--acc); color: #fff; width: 100%; padding: 9px; margin-top: 14px; font-weight: 600; }
+  button.primary:disabled { opacity: .45; cursor: not-allowed; }
+  .hint { color: var(--dim); font-size: 12px; margin-top: 8px; }
+  .msg { margin-top: 10px; font-size: 13px; min-height: 1em; }
+  .msg.bad { color: var(--bad); } .msg.warn { color: var(--warn); }
+  .bar { height: 4px; background: var(--panel2); border-radius: 2px; margin-top: 10px; overflow: hidden; display: none; }
+  .bar > div { height: 100%; background: var(--acc); width: 0; transition: width .2s; }
+  .jobs { list-style: none; margin: 0; padding: 0; max-height: 46vh; overflow: auto; }
+  .jobs li { padding: 8px 10px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .jobs li:hover { background: var(--panel2); } .jobs li.sel { background: #5b9cff22; }
+  .jobs .n { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jobs .t { font-size: 11px; color: var(--dim); }
+  .st { font-size: 11px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+  .st.done { background: #3ecf8e22; color: var(--ok); } .st.failed { background: #f25f5c22; color: var(--bad); }
+  .st.running { background: #5b9cff22; color: var(--acc); } .st.queued { background: #8b93a522; color: var(--dim); }
+  .st.fell { background: #f5a52422; color: var(--warn); }
+  .empty { color: var(--dim); text-align: center; padding: 60px 0; }
+  .steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  @media (max-width: 1200px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+  .step { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+  .step .h { display: flex; justify-content: space-between; font-weight: 600; font-size: 13px; }
+  .step .m { color: var(--dim); margin-top: 4px; word-break: break-all; }
+  .step.running { border-color: var(--acc); } .step.done .h span:last-child { color: var(--ok); }
+  .step.failed { border-color: var(--bad); } .step.failed .h span:last-child { color: var(--bad); }
+  .step.skipped { opacity: .5; }
+  .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--acc); border-right-color: transparent; border-radius: 50%; animation: s 0.8s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  .err { background: #f25f5c18; border: 1px solid #f25f5c55; color: #ffb3b1; padding: 10px 12px; border-radius: 8px; margin-top: 12px; white-space: pre-wrap; }
+  video.result { width: 100%; border-radius: 8px; background: #000; display: block; }
+  .labels { display: flex; margin-top: 6px; color: var(--dim); font-size: 12px; }
+  .labels span { flex: 1; text-align: center; }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  @media (max-width: 1200px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+  .metric { background: var(--panel2); border-radius: 8px; padding: 10px 12px; }
+  .metric .k { color: var(--dim); font-size: 12px; } .metric .v { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .metric .v.ok { color: var(--ok); } .metric .v.bad { color: var(--bad); }
+  canvas { width: 100%; height: 150px; display: block; margin-top: 12px; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  td, th { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+  th { color: var(--dim); font-weight: 500; }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 1200px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .kps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .kps span { background: var(--panel2); border-radius: 6px; padding: 3px 8px; font-size: 12px; color: var(--dim); }
+  .kps b { color: var(--text); font-weight: 500; }
+  .dl a { color: var(--acc); margin-right: 14px; text-decoration: none; font-size: 13px; }
+  details summary { cursor: pointer; color: var(--dim); }
+  pre.log { background: #0a0c10; border-radius: 8px; padding: 10px; max-height: 320px; overflow: auto; font-size: 11px; color: #b8c0d0; white-space: pre-wrap; }
+  .title { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .title h2 { margin: 0; color: var(--text); font-size: 16px; }
+  /* ?public=1：面向大众的演示模式，只留上传、进度和结果 */
+  .public #env, .public .hint, .public #videoOpts, .public #optRow, .public #pelvisRow, .public #jobsCard, .public #retry, .public #logbox,
+  .public .grid2, .public .dl, .public canvas, .public .adv, .public #again, .public #examples, .public .metric:not(:first-child), .public .step .m span { display: none !important; }
+  .public .metrics { grid-template-columns: 1fr; }
+  .public .metric .v { font-size: 26px; }
+  .public .step .m { min-height: 1.5em; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="h1">Q1 动作跟踪</h1>
+  <div class="badges" id="env"></div>
+</header>
+<main>
+  <div>
+    <div class="card" id="textCard" style="display:none">
+      <h2>描述一个动作（<span class="maxs">10</span> 秒以内）</h2>
+      <textarea id="text" placeholder="例：A person waves the right hand, then bows.&#10;也可以写中文，会先改写成英文"></textarea>
+      <div class="chips" id="examples"></div>
+      <div class="row"><label>时长 s</label><input type="number" id="dur" step="0.5" min="1" placeholder="默认 5（按动作多少调整）"></div>
+      <div class="row adv"><label>种子</label><input type="number" id="seed" step="1" min="0" placeholder="留空随机"></div>
+      <div class="row adv"><label>CFG</label><input type="number" id="cfg" step="0.5" min="1" placeholder="5.0（越大越贴合文字）"></div>
+      <label class="chk adv"><input type="checkbox" id="rewrite"> 英文描述也先改写（中文总会改写）</label>
+      <label class="chk adv"><input type="checkbox" id="opt2" checked> 轨迹优化（修悬空、滑脚、穿模）</label>
+      <button class="primary" id="gen" disabled>生成并跟踪</button>
+      <div class="msg" id="tmsg"></div>
+      <div class="hint">流程：HY-Motion 1.0（GPU）生成人体动作 → 重定向到 Q1 → 可行性检查与轨迹优化 → 基础模型 E_ref 直接跟踪（未微调）。单人、不含物体和场景的描述效果最好。</div>
+    </div>
+    <div class="card" id="upCard">
+      <h2><span id="upTitle">上传动作</span>（<span class="maxs">10</span> 秒以内）</h2>
+      <div class="drop" id="drop">
+        <input type="file" id="file" accept="video/*,.bvh,.npz">
+        点击或拖入文件<br><span class="hint">视频（mp4 / mov）· LAFAN1 BVH · SMPL-X / AMASS npz · Q1 qpos / motion.npz</span>
+        <div class="fname" id="fname"></div>
+      </div>
+      <video id="preview" controls muted playsinline></video>
+      <div class="row">
+        <label>起点 s</label><input type="number" id="start" step="0.1" min="0" placeholder="0">
+        <button id="setStart" title="用预览当前时间">设为当前</button>
+      </div>
+      <div class="row">
+        <label>终点 s</label><input type="number" id="end" step="0.1" min="0" placeholder="结尾">
+        <button id="setEnd" title="用预览当前时间">设为当前</button>
+      </div>
+      <div id="videoOpts">
+        <label class="chk"><input type="checkbox" id="static"> 固定机位（三脚架拍摄，跳过视觉里程计）</label>
+        <div class="row"><label>焦距 mm</label><input type="number" id="fmm" placeholder="不填自动估计（iPhone 主摄 24）"></div>
+        <label class="chk"><input type="checkbox" id="force"> 全身可见门槛不过也继续</label>
+      </div>
+      <label class="chk" id="optRow"><input type="checkbox" id="opt" checked> 轨迹优化（修悬空、滑脚、穿模）</label>
+      <div class="row" id="pelvisRow"><label>骨盆最低 m</label><input type="number" id="pelvis" step="0.01" min="0.2" max="0.42" placeholder="不限（站立 0.42；深蹲、仆步建议 0.33）"></div>
+      <button class="primary" id="go" disabled>上传并跟踪</button>
+      <div class="bar" id="bar"><div></div></div>
+      <div class="msg" id="msg"></div>
+      <div class="hint">视频需全身入镜、单人。流程：截取 → GVHMR 提取人体 → 重定向到 Q1 → 可行性检查与轨迹优化 → 基础模型 E_ref 直接跟踪（未微调）。</div>
+    </div>
+    <div class="card" id="jobsCard">
+      <h2>任务</h2>
+      <ul class="jobs" id="jobs"></ul>
+    </div>
+  </div>
+  <div class="card" id="detail"><div class="empty">上传一段动作，或从左侧选择任务</div></div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PUBLIC = new URLSearchParams(location.search).has("public");
+if (PUBLIC) document.body.classList.add("public");
+const STEP_NAMES = PUBLIC
+  ? { prepare: "读取视频", extract: "识别人体动作", generate: "根据文字生成动作", retarget: "换成机器人身材", optimize: "检查能否做到", convert: "准备动作", track: "机器人模仿" }
+  : { prepare: "截取", extract: "提取人体", generate: "HY-Motion 生成", retarget: "重定向到 Q1", optimize: "检查与优化", convert: "生成参考", track: "基础模型跟踪" };
+const STATE_PUBLIC = { pending: "等待", running: "进行中…", done: "完成", skipped: "—", failed: "失败" };
+const PANELS_PUBLIC = { 3: ["示范视频", "转换成机器人动作", "机器人模仿（物理仿真）"], 2: ["转换成机器人动作", "机器人模仿（物理仿真）"] };
+const EXAMPLES = [
+  "A person waves the right hand, then bows.", "A person does three squats.", "A person walks forward slowly, then turns around.",
+  "A person raises both arms overhead and stretches.", "一个人原地踏步，同时双手前后摆动", "一个人打了一套简单的太极拳起势",
+];
+let TEXT = false;
+const FEAS_NAMES = { joint_limit: "关节限位", penetration: "穿模", foot_slip: "滑脚", foot_tilt: "支撑脚放平", smoothness: "平滑", torque: "力矩", balance: "平衡" };
+const VIDEO_EXT = ["mp4", "mov", "m4v", "avi", "mkv", "webm"];
+let ENV = null, MAXS = 10, file = null, fileDur = null, selected = null, timer = null, jobCache = null, curve = null, rafId = null;
+
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmtT = (ts) => new Date(ts * 1000).toLocaleString("zh-CN", { hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+const isVideo = (name) => VIDEO_EXT.includes(name.split(".").pop().toLowerCase());
+
+async function loadEnv() {
+  ENV = await (await fetch("/api/env")).json();
+  MAXS = ENV.max_seconds; document.querySelectorAll(".maxs").forEach((e) => e.textContent = MAXS);
+  TEXT = ENV.app === "text2motion";
+  const d = ENV.device, ex = ENV.extract, t = ENV.t2m;
+  const accel = d.cuda ? `CUDA · ${d.gpu}` : d.mps ? "Apple MPS" : "无（CPU）";
+  const exText = ex.backend === "local" ? `GVHMR · ${ex.device.toUpperCase()}` : "未配置（只收动作文件）";
+  const t2mText = t && (t.ok ? `${t.model} · ${t.gpu}${t.busy ? "（忙）" : ""}` : `连不上 ${t.url}`);
+  $("env").innerHTML = [
+    `设备 <b>${esc(d.os)} ${esc(d.machine)}</b>`, TEXT ? `动作生成 <b>${esc(t2mText)}</b>` : `加速 <b>${esc(accel)}</b>`,
+    ...(TEXT ? [] : [`视频提取 <b>${esc(exText)}</b>`]), `跟踪 <b>MuJoCo CPU + ONNX</b>`, `权重包 <b>${esc(ENV.package_name)}</b>`,
+  ].map((s) => `<span class="badge">${s}</span>`).join("");
+  if (TEXT) {
+    $("textCard").style.display = ""; $("upCard").style.display = "none";
+    const title = PUBLIC ? "Q1 机器人 · 听描述做动作" : "Q1 文本生成动作";
+    $("h1").textContent = document.title = title;
+    if (PUBLIC) {
+      $("gen").textContent = "让机器人做出来";
+      if (!selected) $("detail").innerHTML = `<div class="empty">写好后，在这里看机器人做动作</div>`;
+    }
+    if (!t.ok) { $("tmsg").className = "msg bad"; $("tmsg").textContent = `HY-Motion 服务连不上（${t.url}：${t.error}）`; }
+    $("examples").innerHTML = EXAMPLES.map((s, i) => `<button data-i="${i}">${esc(s)}</button>`).join("");
+    $("examples").querySelectorAll("button").forEach((b) => b.onclick = () => { $("text").value = EXAMPLES[b.dataset.i]; validateText(); });
+    validateText();
+  }
+}
+
+// ---------------------------------------------------------------- 文本生成
+function validateText() {
+  const m = $("tmsg"), d = parseFloat($("dur").value);
+  if (m.textContent.startsWith("HY-Motion 服务连不上")) { $("gen").disabled = true; return; }
+  m.className = "msg"; m.textContent = "";
+  let ok = $("text").value.trim().length > 0;
+  if (!isNaN(d) && (d < 1 || d > MAXS)) { m.className = "msg bad"; m.textContent = `时长需在 1–${MAXS} s 之间`; ok = false; }
+  $("gen").disabled = !ok;
+}
+
+async function submitText(opts) {
+  $("gen").disabled = true;
+  const r = await fetch("/api/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(opts) });
+  const j = await r.json();
+  validateText();
+  if (!r.ok) { $("tmsg").className = "msg bad"; $("tmsg").textContent = j.error || "提交失败"; return; }
+  $("tmsg").className = "msg"; $("tmsg").textContent = "已提交";
+  select(j.id); refreshJobs();
+}
+
+const textOpts = () => ({
+  text: $("text").value, duration: $("dur").value, seed: $("seed").value, cfg_scale: $("cfg").value,
+  rewrite: $("rewrite").checked, optimize: $("opt2").checked,
+});
+
+// ---------------------------------------------------------------- 上传
+function pick(f) {
+  file = f; fileDur = null;
+  $("fname").textContent = f ? `${f.name}（${(f.size / 1e6).toFixed(1)} MB）` : "";
+  const pv = $("preview");
+  const vid = f && isVideo(f.name);
+  $("videoOpts").style.display = vid || !f ? "" : "none";
+  $("setStart").disabled = $("setEnd").disabled = !vid;
+  if (vid) {
+    pv.src = URL.createObjectURL(f); pv.style.display = "block";
+    pv.onloadedmetadata = () => { fileDur = pv.duration; validate(); };
+  } else { pv.removeAttribute("src"); pv.style.display = "none"; }
+  validate();
+}
+
+function validate() {
+  const m = $("msg"); m.className = "msg"; m.textContent = "";
+  if (!file) { $("go").disabled = true; return; }
+  const s = parseFloat($("start").value), e = parseFloat($("end").value);
+  const a = isNaN(s) ? 0 : s;
+  let ok = true;
+  if (fileDur != null) {
+    const b = isNaN(e) ? fileDur : Math.min(e, fileDur);
+    const len = b - a;
+    if (len <= 0.5) { m.className = "msg bad"; m.textContent = "截取区间太短"; ok = false; }
+    else if (len > MAXS + 0.05) { m.className = "msg bad"; m.textContent = `当前 ${len.toFixed(1)} s，超过 ${MAXS} s：在预览里拖到想要的位置，点“设为当前”截取一段`; ok = false; }
+    else { m.textContent = `将截取 ${a.toFixed(1)}–${b.toFixed(1)} s，共 ${len.toFixed(1)} s`; }
+  } else if (!isVideo(file.name) && !isNaN(e) && e - a > MAXS + 0.05) {
+    m.className = "msg bad"; m.textContent = `区间超过 ${MAXS} s`; ok = false;
+  } else if (!isVideo(file.name)) {
+    m.className = "msg warn"; m.textContent = `动作文件超过 ${MAXS} s 时需要填写起止时间`;
+  }
+  if (ok && isVideo(file.name) && ENV && ENV.extract.backend === "off") {
+    m.className = "msg bad"; m.textContent = "服务端未配置视频提取（GVHMR），只能上传动作文件"; ok = false;
+  }
+  $("go").disabled = !ok;
+}
+
+function upload() {
+  const q = new URLSearchParams({
+    filename: file.name, start: $("start").value, end: $("end").value, f_mm: $("fmm").value, min_pelvis_h: $("pelvis").value,
+    static_cam: $("static").checked ? "1" : "0", optimize: $("opt").checked ? "1" : "0", force: $("force").checked ? "1" : "0",
+  });
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/jobs?" + q);
+  xhr.setRequestHeader("Content-Type", "application/octet-stream");
+  $("bar").style.display = "block"; $("go").disabled = true;
+  xhr.upload.onprogress = (e) => { if (e.lengthComputable) $("bar").firstElementChild.style.width = (100 * e.loaded / e.total) + "%"; };
+  xhr.onload = () => {
+    $("bar").style.display = "none"; $("bar").firstElementChild.style.width = 0;
+    const r = JSON.parse(xhr.responseText || "{}");
+    if (xhr.status !== 200) { $("msg").className = "msg bad"; $("msg").textContent = r.error || "上传失败"; $("go").disabled = false; return; }
+    $("msg").className = "msg"; $("msg").textContent = "已提交";
+    $("go").disabled = false;
+    select(r.id); refreshJobs();
+  };
+  xhr.onerror = () => { $("msg").className = "msg bad"; $("msg").textContent = "网络错误"; $("go").disabled = false; $("bar").style.display = "none"; };
+  xhr.send(file);
+}
+
+// ---------------------------------------------------------------- 任务列表
+function stateBadge(j) {
+  if (j.state === "done" && j.track && j.track.fell_at_s != null) return `<span class="st fell">摔倒</span>`;
+  const t = { done: "完成", failed: "失败", running: "运行中", queued: "排队" }[j.state] || j.state;
+  return `<span class="st ${j.state}">${t}</span>`;
+}
+
+async function refreshJobs() {
+  const jobs = await (await fetch("/api/jobs")).json();
+  $("jobs").innerHTML = jobs.length ? jobs.map((j) => `
+    <li data-id="${j.id}" class="${j.id === selected ? "sel" : ""}">
+      <div style="min-width:0"><div class="n">${esc(j.input?.original_name || j.id)}</div><div class="t">${fmtT(j.created)}</div></div>
+      ${stateBadge(j)}
+    </li>`).join("") : `<li style="color:var(--dim);cursor:default">还没有任务</li>`;
+  $("jobs").querySelectorAll("li[data-id]").forEach((li) => li.onclick = () => select(li.dataset.id));
+}
+
+// ---------------------------------------------------------------- 任务详情
+function select(id) {
+  selected = id; jobCache = null; curve = null;
+  $("jobs").querySelectorAll("li").forEach((li) => li.classList.toggle("sel", li.dataset.id === id));
+  poll();
+}
+
+async function poll() {
+  clearTimeout(timer);
+  if (!selected) return;
+  const id = selected;
+  const r = await fetch(`/api/jobs/${id}`);
+  if (id !== selected) return;
+  if (!r.ok) { $("detail").innerHTML = `<div class="empty">任务不存在</div>`; return; }
+  const j = await r.json();
+  const prevState = jobCache?.state;
+  render(j, prevState);
+  jobCache = j;
+  if (j.state === "queued" || j.state === "running") timer = setTimeout(poll, 1500);
+  else if (prevState && prevState !== j.state) refreshJobs();
+}
+
+function stepHtml(s) {
+  const icon = { pending: "", running: `<span class="spin"></span>`, done: "✓", failed: "✗", skipped: "–" }[s.state];
+  const dt = s.t0 ? ((s.t1 || Date.now() / 1000) - s.t0) : null;
+  return `<div class="step ${s.state}"><div class="h"><span>${STEP_NAMES[s.name] || s.name}</span><span>${icon}</span></div>
+    <div class="m">${esc(PUBLIC ? STATE_PUBLIC[s.state] : s.msg || "")}${dt != null && s.state !== "skipped" ? ` <span style="opacity:.7">${dt.toFixed(0)} s</span>` : ""}</div></div>`;
+}
+
+function render(j, prevState) {
+  const det = $("detail");
+  const header = `<div class="title"><h2>${esc(j.input.original_name)}</h2>${stateBadge({ state: j.state, track: j.result?.track })}
+    ${j.state === "queued" && j.queue_pos ? `<span class="hint" style="margin:0">队列第 ${j.queue_pos} 位</span>` : ""}
+    ${j.state === "failed" || j.state === "done" ? `<button id="retry" style="margin-left:auto" title="复用已有的人体动作（提取或生成）与重定向结果，重跑其余步骤">重试</button>` : ""}
+    ${j.options.text && (j.state === "failed" || j.state === "done") ? `<button id="again" title="同样的描述和设置，换一个随机种子">换个种子再生成</button>` : ""}</div>`;
+  const steps = `<div class="steps" id="steps">${j.steps.map(stepHtml).join("")}</div>`;
+  const err = j.error ? `<div class="err">${esc(j.error)}</div>` : "";
+  // 结果区只在完成时整块重建，避免轮询打断视频播放
+  if (j.state === "done" && prevState === "done" && $("result")) { $("steps").outerHTML = steps; return; }
+  det.innerHTML = header + genHtml(j) + steps + err + (j.state === "done" ? resultHtml(j) : "") + logHtml(j);
+  if ($("retry")) $("retry").onclick = async () => {
+    const r = await fetch(`/api/jobs/${j.id}/retry`, { method: "POST" });
+    if (!r.ok) { alert((await r.json()).error); return; }
+    jobCache = null; poll(); refreshJobs();
+  };
+  if ($("again")) $("again").onclick = () => submitText({ ...j.options, seed: "" });
+  if (j.state === "done") setupResult(j);
+  const lg = $("logbox");
+  if (lg && (j.state !== "done" || lg.open)) loadLog(j.id);
+  if (lg) lg.ontoggle = () => lg.open && loadLog(j.id);
+}
+
+function genHtml(j) {
+  const o = j.options, g = j.result?.generate;
+  if (!o.text || PUBLIC) return "";
+  const used = g && g.rewritten ? `<div><span class="k">改写为</span> ${esc(g.text)}</div>` : "";
+  const facts = g ? `${g.duration_s.toFixed(1)} s · seed ${g.seed} · CFG ${g.cfg_scale} · ${esc(g.model)} · GPU ${g.gen_s.toFixed(1)} s`
+    : `时长 ${o.duration} s · seed ${o.seed} · CFG ${o.cfg_scale}`;
+  return `<div class="gen">${used}<div class="k" style="margin-top:2px">${facts}</div></div>`;
+}
+
+function logHtml(j) {
+  const open = j.state === "running" || j.state === "failed";
+  return `<details id="logbox" style="margin-top:16px" ${open ? "open" : ""}><summary>日志</summary><pre class="log" id="log">…</pre></details>`;
+}
+
+async function loadLog(id) {
+  const r = await (await fetch(`/api/jobs/${id}/log`)).json();
+  const el = $("log"); if (!el || id !== selected) return;
+  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
+  el.textContent = r.log || "（暂无）";
+  if (atBottom) el.scrollTop = el.scrollHeight;
+}
+
+function resultHtml(j) {
+  const t = j.result.track, f = j.files, feas = j.result.feasibility, rt = j.result.retarget;
+  const fell = t.fell_at_s != null;
+  const metric = (k, v, cls = "") => `<div class="metric"><div class="k">${k}</div><div class="v ${cls}">${v}</div></div>`;
+  let feasTable = "";
+  if (feas) {
+    const cols = feas.after ? ["before", "after"] : ["before"];
+    feasTable = `<div><h2 style="margin-top:18px">可行性（${feas.after ? (feas.optimized ? "优化前 → 优化后" : "优化被退回，用原轨迹") : "只检查"}）</h2><table>
+      <tr><th>项目</th>${cols.map((c) => `<th>${c === "before" ? "优化前" : "优化后"}</th>`).join("")}</tr>
+      <tr><td>结论</td>${cols.map((c) => `<td>${feas[c].verdict}</td>`).join("")}</tr>
+      ${Object.keys(FEAS_NAMES).map((k) => `<tr><td>${FEAS_NAMES[k]}通过率</td>${cols.map((c) => `<td>${feas[c].pass_rate[k] == null ? "—" : (feas[c].pass_rate[k] * 100).toFixed(1) + "%"}</td>`).join("")}</tr>`).join("")}
+      <tr><td>支撑脚悬空</td>${cols.map((c) => `<td>${(feas[c].hover_rate * 100).toFixed(0)}%</td>`).join("")}</tr>
+    </table></div>`;
+  }
+  const joints = `<div><h2 style="margin-top:18px">误差最大的关节（${fell ? "摔倒前" : "全程"}均值）</h2><table>
+    <tr><th>关节</th><th>误差 rad</th></tr>${t.worst_joints.map((x) => `<tr><td>${x.name}</td><td>${x.err.toFixed(3)}</td></tr>`).join("")}</table>
+    ${rt ? `<h2 style="margin-top:18px">重定向关键点误差（cm）</h2><div class="kps">${Object.entries(rt.tracking_error_cm).map(([k, v]) => `<span>${k.replace("_link", "")} <b>${v}</b></span>`).join("")}</div>` : ""}
+  </div>`;
+  return `<div id="result" style="margin-top:16px">
+    <video class="result" id="rv" src="${f["tracking.mp4"]}" controls playsinline loop></video>
+    <div class="labels">${(PUBLIC ? (TEXT ? ["根据文字生成的人体动作", ...PANELS_PUBLIC[2]] : PANELS_PUBLIC[t.panels.length]) : t.panels).map((p) => `<span>${p}</span>`).join("")}</div>
+    <div class="metrics">
+      ${metric("结果", fell ? `摔倒 @ ${t.fell_at_s.toFixed(2)} s` : "全程未摔倒", fell ? "bad" : "ok")}
+      ${metric("关节误差均值" + (fell ? "（摔倒前）" : ""), t.joint_err_mean.toFixed(3) + " rad")}
+      ${metric("关节误差 P95", t.joint_err_p95.toFixed(3) + " rad")}
+      ${metric("时长", t.duration_s.toFixed(1) + " s")}
+    </div>
+    <canvas id="chart"></canvas>
+    <div class="grid2">${feasTable}${joints}</div>
+    <div class="dl" style="margin-top:16px">
+      <a href="${f["tracking.mp4"]}" download>下载跟踪视频</a>
+      ${f["artifact/motion.npz"] ? `<a href="${f["artifact/motion.npz"]}" download>下载参考 motion.npz</a>` : ""}
+      ${f["generate/human_smplh.npz"] ? `<a href="${f["generate/human_smplh.npz"]}" download>下载人体动作（AMASS SMPL+H）</a>` : ""}
+      <a href="${f["metrics.json"]}" download>下载 metrics.json</a>
+    </div>
+    ${j.result.ref ? `<div class="hint">已存入参考库：${j.result.ref}</div>` : ""}
+  </div>`;
+}
+
+async function setupResult(j) {
+  curve = (await (await fetch(j.files["metrics.json"])).json()).curve;
+  const v = $("rv"), c = $("chart");
+  const fell = j.result.track.fell_at_s;
+  const draw = () => drawChart(c, curve, v.currentTime, fell);
+  draw();
+  v.onplay = () => { const loop = () => { draw(); rafId = requestAnimationFrame(loop); }; cancelAnimationFrame(rafId); loop(); };
+  v.onpause = v.onseeked = () => { cancelAnimationFrame(rafId); draw(); };
+  c.onclick = (e) => { const r = c.getBoundingClientRect(); const pad = 44; const T = curve.t[curve.t.length - 1];
+    v.currentTime = Math.max(0, Math.min(T, (e.clientX - r.left - pad) / (r.width - pad - 50) * T)); draw(); };
+  window.onresize = draw;
+}
+
+function drawChart(c, cv, now, fell) {
+  const dpr = window.devicePixelRatio || 1, W = c.clientWidth, H = c.clientHeight;
+  c.width = W * dpr; c.height = H * dpr;
+  const g = c.getContext("2d"); g.scale(dpr, dpr);
+  const L = 44, R = 50, T = 14, B = 22, w = W - L - R, h = H - T - B;
+  const tMax = cv.t[cv.t.length - 1];
+  const eMax = Math.max(0.05, ...cv.joint_err) * 1.1;
+  const hs = cv.pelvis_h_ref.concat(cv.pelvis_h_sim);
+  const hMin = Math.min(...hs) - 0.02, hMax = Math.max(...hs) + 0.02;
+  const X = (t) => L + t / tMax * w;
+  g.font = "11px -apple-system, sans-serif"; g.fillStyle = "#8b93a5"; g.strokeStyle = "#2a2f3a"; g.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = T + h * i / 4; g.beginPath(); g.moveTo(L, y); g.lineTo(L + w, y); g.stroke();
+    g.textAlign = "right"; g.fillText((eMax * (1 - i / 4)).toFixed(2), L - 6, y + 4);
+    g.textAlign = "left"; g.fillText((hMin + (hMax - hMin) * (1 - i / 4)).toFixed(2), L + w + 6, y + 4);
+  }
+  g.textAlign = "center";
+  for (let s = 0; s <= tMax; s += tMax > 6 ? 2 : 1) g.fillText(s + "s", X(s), H - 6);
+  if (fell != null) { g.fillStyle = "#f25f5c22"; g.fillRect(X(fell), T, L + w - X(fell), h); }
+  const line = (ys, lo, hi, color, dash = []) => {
+    g.beginPath(); g.setLineDash(dash); g.strokeStyle = color; g.lineWidth = 1.5;
+    ys.forEach((y, i) => { const px = X(cv.t[i]), py = T + h * (1 - (y - lo) / (hi - lo)); i ? g.lineTo(px, py) : g.moveTo(px, py); });
+    g.stroke(); g.setLineDash([]);
+  };
+  line(cv.pelvis_h_ref, hMin, hMax, "#8b93a5", [4, 3]);
+  line(cv.pelvis_h_sim, hMin, hMax, "#3ecf8e");
+  line(cv.joint_err, 0, eMax, "#5b9cff");
+  g.strokeStyle = "#fff"; g.lineWidth = 1; g.beginPath(); g.moveTo(X(Math.min(now, tMax)), T); g.lineTo(X(Math.min(now, tMax)), T + h); g.stroke();
+  g.textAlign = "left";
+  [["#5b9cff", "关节误差 rad（左轴）"], ["#3ecf8e", "骨盆高度 仿真 m（右轴）"], ["#8b93a5", "骨盆高度 参考"]].forEach(([col, s], i) => {
+    g.fillStyle = col; g.fillRect(L + 8 + i * 170, T + 2, 10, 3); g.fillStyle = "#c8cdd8"; g.fillText(s, L + 22 + i * 170, T + 7);
+  });
+}
+
+// ---------------------------------------------------------------- 绑定
+const drop = $("drop");
+drop.onclick = () => $("file").click();
+$("file").onchange = (e) => pick(e.target.files[0]);
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]); };
+$("start").oninput = $("end").oninput = validate;
+$("setStart").onclick = () => { $("start").value = $("preview").currentTime.toFixed(1); validate(); };
+$("setEnd").onclick = () => { $("end").value = $("preview").currentTime.toFixed(1); validate(); };
+$("go").onclick = upload;
+$("text").oninput = $("dur").oninput = validateText;
+$("gen").onclick = () => submitText(textOpts());
+if (PUBLIC) {
+  $("h1").textContent = "Q1 机器人 · 看视频学动作"; $("upTitle").textContent = "上传一段视频"; $("go").textContent = "上传，让机器人学";
+  document.title = "Q1 机器人 · 看视频学动作";
+}
+
+if (PUBLIC) $("detail").innerHTML = `<div class="empty">上传后，在这里看机器人学动作</div>`;
+loadEnv().then(refreshJobs).then(() => { const first = document.querySelector("#jobs li[data-id]"); if (first && !PUBLIC) select(first.dataset.id); });
+setInterval(refreshJobs, 5000);
+</script>
+</body>
+</html>

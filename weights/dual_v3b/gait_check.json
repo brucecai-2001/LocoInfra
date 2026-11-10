@@ -1,0 +1,65 @@
+{
+ "tele": {
+  "fwd_0.3": {
+   "toe_out_deg": [
+    7.5,
+    11.1
+   ],
+   "hip_yaw_out_deg": [
+    5.4,
+    7.4
+   ],
+   "width_cm": 17.0,
+   "fell": false
+  },
+  "fwd_0.6": {
+   "toe_out_deg": [
+    7.9,
+    12.0
+   ],
+   "hip_yaw_out_deg": [
+    5.9,
+    7.3
+   ],
+   "width_cm": 14.1,
+   "fell": false
+  },
+  "back_0.4": {
+   "toe_out_deg": [
+    0.3,
+    -1.7
+   ],
+   "hip_yaw_out_deg": [
+    -2.0,
+    -3.5
+   ],
+   "width_cm": 17.6,
+   "fell": false
+  },
+  "left_0.3": {
+   "toe_out_deg": [
+    4.4,
+    14.6
+   ],
+   "hip_yaw_out_deg": [
+    3.5,
+    6.8
+   ],
+   "width_cm": 20.5,
+   "fell": false
+  },
+  "turn_l_1.0": {
+   "toe_out_deg": [
+    2.8,
+    8.9
+   ],
+   "hip_yaw_out_deg": [
+    1.2,
+    4.1
+   ],
+   "width_cm": 19.1,
+   "fell": false
+  }
+ },
+ "ref": {}
+}

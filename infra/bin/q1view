@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# 轨迹查看器（macOS 需要 mjpython 才能开 MuJoCo 窗口）。PYTHONPATH 同 q1py。
+INFRA="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(dirname "$INFRA")"
+export PYTHONPATH="$ROOT:$INFRA:$INFRA/.deps/GMR:$INFRA/.deps/any4hdmi/src${PYTHONPATH:+:$PYTHONPATH}"
+PY="$INFRA/.venv/bin/mjpython"
+[ -x "$PY" ] || PY="$INFRA/.venv/bin/python"
+exec "$PY" -m q1infra.viewer "$@"

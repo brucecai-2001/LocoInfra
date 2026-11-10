@@ -1,0 +1,8 @@
+{
+ "name": "getup_facedown",
+ "source": "skills",
+ "frames": 455,
+ "fps": 50.0,
+ "duration_s": 9.1,
+ "desc": "俯卧起身：首 1 s 趴姿静止，末 2 s 站姿静止"
+}

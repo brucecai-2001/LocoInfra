@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# GPU 训练机上的 q1py：复用 SuperMimic-Q1 的环境（需另装 GMR / any4hdmi 依赖，见 docs/data.md），
+# 用来在多核机器上批量建动作库。
+INFRA="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(dirname "$INFRA")"
+export PYTHONPATH="$ROOT:$INFRA:$INFRA/.deps/GMR:$INFRA/.deps/any4hdmi/src${PYTHONPATH:+:$PYTHONPATH}"
+exec "$INFRA/SuperMimic-Q1/.venv/bin/python" "$@"

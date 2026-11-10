@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# 数据处理 / 部署环境的 Python（infra/.venv）。
+# macOS 会给 .venv 里的 .pth 打 hidden 标记，Python 随即跳过它们，可编辑安装就失效了，
+# 所以源码路径在这里显式加进 PYTHONPATH。
+INFRA="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(dirname "$INFRA")"
+export PYTHONPATH="$ROOT:$INFRA:$INFRA/.deps/GMR:$INFRA/.deps/any4hdmi/src${PYTHONPATH:+:$PYTHONPATH}"
+exec "$INFRA/.venv/bin/python" "$@"

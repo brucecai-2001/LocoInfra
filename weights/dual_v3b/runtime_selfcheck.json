@@ -1,0 +1,76 @@
+{
+ "ref": [
+  {
+   "clip": "amass_v1__amass_BioMotionLab_NTroje_rub041_0017_lifting_light1__0",
+   "steps": 383,
+   "of": 383,
+   "fell_at_s": null,
+   "joint_err_mean": 0.0912
+  },
+  {
+   "clip": "amass_v1__amass_BioMotionLab_NTroje_rub070_0021_catching_and_throwing__1",
+   "steps": 12,
+   "of": 117,
+   "fell_at_s": 0.24,
+   "joint_err_mean": 0.723
+  },
+  {
+   "clip": "amass_v1__amass_CMU_30_30_12__1",
+   "steps": 1197,
+   "of": 1197,
+   "fell_at_s": null,
+   "joint_err_mean": 0.0569
+  },
+  {
+   "clip": "amass_v1__amass_DanceDB_20131001_OliviaKyriakides_Olivia_Happy_C3D__0",
+   "steps": 480,
+   "of": 480,
+   "fell_at_s": null,
+   "joint_err_mean": 0.1091
+  },
+  {
+   "clip": "amass_v1__amass_DanceDB_20131001_VasoAristeidou_Vasso_Mix_01__4",
+   "steps": 549,
+   "of": 549,
+   "fell_at_s": null,
+   "joint_err_mean": 0.1128
+  },
+  {
+   "clip": "amass_v1__amass_TotalCapture_s5_rom3__0",
+   "steps": 749,
+   "of": 749,
+   "fell_at_s": null,
+   "joint_err_mean": 0.0528
+  }
+ ],
+ "switch": [
+  {
+   "clip": "amass_v1__amass_BioMotionLab_NTroje_rub041_0017_lifting_light1__0",
+   "blend_steps": 0,
+   "ref_seconds": 6.0,
+   "fell_at_s": null,
+   "min_pelvis_height": 0.264
+  },
+  {
+   "clip": "amass_v1__amass_BioMotionLab_NTroje_rub041_0017_lifting_light1__0",
+   "blend_steps": 10,
+   "ref_seconds": 6.0,
+   "fell_at_s": null,
+   "min_pelvis_height": 0.264
+  },
+  {
+   "clip": "amass_v1__amass_BioMotionLab_NTroje_rub041_0017_lifting_light1__0",
+   "blend_steps": 25,
+   "ref_seconds": 6.0,
+   "fell_at_s": null,
+   "min_pelvis_height": 0.264
+  },
+  {
+   "clip": "amass_v1__amass_BioMotionLab_NTroje_rub041_0017_lifting_light1__0",
+   "blend_steps": 50,
+   "ref_seconds": 6.0,
+   "fell_at_s": null,
+   "min_pelvis_height": 0.263
+  }
+ ]
+}

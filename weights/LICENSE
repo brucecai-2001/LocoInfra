@@ -1,0 +1,42 @@
+LocoInfra Model Weights - Non-Commercial License
+
+Copyright (c) 2026 brucecai-2001
+
+The files under this directory (weights/) - ONNX graphs, deploy.yaml, scene.xml
+and the accompanying evaluation reports - are NOT covered by the MIT License
+that applies to the source code of this repository.
+
+The base model weights (dual_v3b) were trained on motion data derived from:
+
+  - LAFAN1 (Ubisoft La Forge), licensed under Creative Commons
+    Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0):
+    https://github.com/ubisoft/ubisoft-laforge-animation-dataset
+  - AMASS (Max Planck Institute for Intelligent Systems), whose license permits
+    use for non-commercial scientific research purposes only:
+    https://amass.is.tue.mpg.de/license.html
+
+The skill weights (getup_vpd_ft) were trained on the get-up / lie-down
+reference trajectories in apps/ref/skills/.
+
+Accordingly, all weights in this directory are made available under the Creative Commons
+Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0,
+https://creativecommons.org/licenses/by-nc/4.0/), subject additionally to the
+following conditions:
+
+  1. Non-commercial use only. The weights, and any model, product or service
+     built from or incorporating them (including fine-tuned or distilled
+     models), may be used only for non-commercial research and education.
+     Commercial use of any kind is not permitted.
+  2. Upstream terms. Your use must also comply with the license terms of
+     LAFAN1 and AMASS (including the licenses of the individual AMASS
+     sub-datasets). Where those terms are more restrictive than CC BY-NC 4.0,
+     they prevail.
+  3. Attribution. Publications or works using the weights must cite this
+     repository as well as LAFAN1 and AMASS as requested by their authors.
+  4. The robot model referenced by scene.xml (q1/q1_v3) remains the property of
+     its respective owners.
+
+THE WEIGHTS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY ARISING FROM THE USE OF THE WEIGHTS, INCLUDING ANY DAMAGE TO
+ROBOTS, PROPERTY OR PERSONS WHEN DEPLOYED ON REAL HARDWARE.

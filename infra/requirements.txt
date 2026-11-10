@@ -1,0 +1,8 @@
+# 数据处理（重定向、可行性检查、轨迹优化、建库）与部署运行时的依赖。
+# GMR、any4hdmi 由 setup.sh 从 infra/.deps 安装，会带上 mink、smplx、torch 等。
+mujoco>=3.3
+numpy>=1.26
+scipy>=1.13
+imageio[ffmpeg]
+pyyaml
+onnxruntime>=1.18

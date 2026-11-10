@@ -1,0 +1,272 @@
+{
+ "job": "getup_vpd_ft",
+ "created": "2026-11-05T14:02:28",
+ "robot": "q1",
+ "source_motion": {
+  "input_file": null,
+  "input_sha256": null,
+  "motion_npz_sha256": "93c0ceeccf017b843f103cd69cb2effdf48716dfa7b01befc3fc61bf21ea4a3e",
+  "any4hdmi_manifest_sha256": null
+ },
+ "code_commit": "unknown",
+ "training": {
+  "mode": "resume",
+  "resumed_from": "logs/getup_v2/ckpt_latest.pt",
+  "seed": 0,
+  "iteration": 58500,
+  "train_hours": 5.011166627407074,
+  "num_envs": 4096,
+  "eval_history": [
+   {
+    "clips": 2,
+    "failed": 1,
+    "mean_norm_return": 0.7212430652150184,
+    "step_weighted_norm_return": 0.7226001387792276,
+    "iteration": 2250,
+    "hours": 0.2515856134229236,
+    "passed": false
+   },
+   {
+    "clips": 2,
+    "failed": 1,
+    "mean_norm_return": 0.7909206647977098,
+    "step_weighted_norm_return": 0.7972825969055778,
+    "iteration": 5350,
+    "hours": 0.5030197015735838,
+    "passed": false
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.8728321613475492,
+    "step_weighted_norm_return": 0.8730340899054101,
+    "iteration": 8400,
+    "hours": 0.7533027819792429,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9428169156366577,
+    "step_weighted_norm_return": 0.9424200047133862,
+    "iteration": 11400,
+    "hours": 1.0026574365297953,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9587201917910511,
+    "step_weighted_norm_return": 0.9583911743858433,
+    "iteration": 14500,
+    "hours": 1.2549908916155497,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9656903918244742,
+    "step_weighted_norm_return": 0.9653296703907139,
+    "iteration": 17600,
+    "hours": 1.5021244816647636,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9670885136679646,
+    "step_weighted_norm_return": 0.9667327325363072,
+    "iteration": 20700,
+    "hours": 1.754694988131523,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9673082208129199,
+    "step_weighted_norm_return": 0.9669690788538111,
+    "iteration": 23800,
+    "hours": 2.003116459912724,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9709067219104011,
+    "step_weighted_norm_return": 0.97059000338575,
+    "iteration": 26900,
+    "hours": 2.2525992924637266,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9716312587199407,
+    "step_weighted_norm_return": 0.971321175394069,
+    "iteration": 30000,
+    "hours": 2.501568543844753,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9725325013156156,
+    "step_weighted_norm_return": 0.972230887385901,
+    "iteration": 33100,
+    "hours": 2.753319863014751,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9737423910235508,
+    "step_weighted_norm_return": 0.9734563209091031,
+    "iteration": 36150,
+    "hours": 3.003231243888537,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9738190287305881,
+    "step_weighted_norm_return": 0.9735332658266451,
+    "iteration": 36150,
+    "hours": 3.0044678104586073,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9490660692729471,
+    "step_weighted_norm_return": 0.9483750986700308,
+    "iteration": 38450,
+    "hours": 3.258427428338263,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9683380517479099,
+    "step_weighted_norm_return": 0.9683348185915724,
+    "iteration": 41500,
+    "hours": 3.5062451264593335,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9731440053746434,
+    "step_weighted_norm_return": 0.9730969842383479,
+    "iteration": 44650,
+    "hours": 3.7595249396562576,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9727129020706735,
+    "step_weighted_norm_return": 0.9727131276136101,
+    "iteration": 47750,
+    "hours": 4.0088068606456115,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9735896757917979,
+    "step_weighted_norm_return": 0.9736149845405379,
+    "iteration": 50850,
+    "hours": 4.259706896675958,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9733069172890235,
+    "step_weighted_norm_return": 0.9733093747778014,
+    "iteration": 53850,
+    "hours": 4.506510493291749,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9732338225918145,
+    "step_weighted_norm_return": 0.9732337752028672,
+    "iteration": 53850,
+    "hours": 4.508025306728151,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9716015698478203,
+    "step_weighted_norm_return": 0.9715682844524361,
+    "iteration": 56200,
+    "hours": 4.762821815874841,
+    "passed": true
+   },
+   {
+    "clips": 2,
+    "failed": 0,
+    "mean_norm_return": 0.9732800563192949,
+    "step_weighted_norm_return": 0.9732215369249503,
+    "iteration": 58500,
+    "hours": 5.011166060500675,
+    "passed": true
+   }
+  ]
+ },
+ "evaluation": {
+  "passed": false,
+  "checks": [
+   {
+    "name": "整条确定性播放",
+    "value": "回报 0.972，摔倒 0/1",
+    "threshold": "≥ 0.80，0 摔倒",
+    "passed": true
+   },
+   {
+    "name": "全量随机化 1000 回合",
+    "value": "摔倒 0（0.0%），回报 0.937",
+    "threshold": "摔倒 ≤ 1%",
+    "passed": true
+   },
+   {
+    "name": "推力 0.5 / 1.0 / 1.5 m/s",
+    "value": "0.5: 0/64 摔，1.0: 7/64 摔，1.5: 34/64 摔",
+    "threshold": "全部恢复",
+    "passed": false
+   },
+   {
+    "name": "关节力矩峰值（PD 需求，限幅前）",
+    "value": "峰值 / 上限 = 0.45，超限 0.00% 关节·步",
+    "threshold": "≤ 1",
+    "passed": true
+   },
+   {
+    "name": "超额定累计时间",
+    "value": "6.2 s（无可行性估算）",
+    "threshold": "需可行性报告",
+    "passed": null
+   },
+   {
+    "name": "关节位置误差（全程平均）",
+    "value": "0.053 rad",
+    "threshold": "≤ 0.10 rad",
+    "passed": true
+   },
+   {
+    "name": "换 MuJoCo 求解器参数",
+    "value": "elliptic_cone +0.2%，cg_solver +0.0%，converged +0.0%，dt_2.5ms +0.0%",
+    "threshold": "回报下降 < 10%",
+    "passed": true
+   }
+  ]
+ },
+ "onnx": {
+  "opset": 17,
+  "parity_max_abs_err": 1.9073486328125e-06,
+  "parity_inputs": 512
+ }
+}

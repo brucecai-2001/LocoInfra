@@ -1,0 +1,37 @@
+#!/bin/bash
+# 由 process_manager 开机拉起（install.py 装到 /robot/software/kabutack_teleop/bin/），以 run 用户运行。
+# 是否「低层运控开发」模式由 apps.teleop 自己判断：厂商运控 mc_app_main 在跑就播报后以退出码 3 退出，不碰手柄和关节。
+# 其他异常退出（崩溃、开机时传感器没起来）隔 RESTART_S 秒重启：每次重启都从趴姿 / 阻尼开始，要 L2+A 才会动。
+
+KABUTACK_HOME="${KABUTACK_HOME:-/home/run/LocoInfra}"
+LOG_PATH="${LOG_PATH:-/tmp/kabutack_teleop}"
+TELEOP_ARGS="${TELEOP_ARGS:---speed-scale 0.5}"
+RESTART_S="${RESTART_S:-5}"
+mkdir -p "$LOG_PATH/ros"
+ls -t "$LOG_PATH"/teleop_*.log 2>/dev/null | tail -n +21 | xargs -r rm --  # 只留最近 20 次开机
+LOG="$LOG_PATH/teleop_$(date +%Y%m%d_%H%M%S).log"
+
+export HOME="$(getent passwd "$(id -un)" | cut -d: -f6)"  # PM 拉起时 HOME=/root，mujoco / onnxruntime 装在 run 的 ~/.local
+export ROS_LOG_DIR="$LOG_PATH/ros"
+source /robot/etc/basic_env >/dev/null 2>&1
+source /opt/ros/humble/setup.bash
+source /robot/software/interface/local_setup.bash
+
+sleep "${TELEOP_DELAY_S:-3}"  # 第一阶段的 mc（非低层运控模式时）要先真正起来，apps.teleop 才判断得准
+cd "$KABUTACK_HOME" || exit 1
+
+child=0
+# PM stop-app 发 SIGTERM：转给 python（它切阻尼后退出），等它收尾
+trap 'kill -TERM "$child" 2>/dev/null; wait "$child"; exit 0' TERM INT
+while true; do
+    # shellcheck disable=SC2086
+    python3 -u -m apps.teleop --backend real --sensor-timeout 60 $TELEOP_ARGS >>"$LOG" 2>&1 &
+    child=$!
+    wait "$child"
+    rc=$?
+    if [ "$rc" -eq 0 ] || [ "$rc" -eq 3 ]; then
+        exit "$rc"
+    fi
+    echo "[start_teleop] $(date '+%F %T') apps.teleop 退出码 $rc，${RESTART_S} s 后重启" >>"$LOG"
+    sleep "$RESTART_S"
+done

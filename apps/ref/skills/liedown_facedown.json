@@ -1,0 +1,8 @@
+{
+ "name": "liedown_facedown",
+ "source": "skills",
+ "frames": 424,
+ "fps": 50.0,
+ "duration_s": 8.48,
+ "desc": "站立趴下（俯卧）：首 1 s 站姿静止，末 1.5 s 趴姿静止"
+}
