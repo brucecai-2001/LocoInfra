@@ -16,7 +16,12 @@ The base model weights (dual_v3b) were trained on motion data derived from:
     https://amass.is.tue.mpg.de/license.html
 
 The skill weights (getup_vpd_ft) were trained on the get-up / lie-down
-reference trajectories in apps/ref/skills/.
+reference trajectories in apps/ref/skills/, which are reconstructed from the
+built-in get-up / lie-down motions of the Q1 robot's motion controller. The
+rights to those motions remain with the robot vendor. If the vendor considers
+this release to infringe its rights, please open an issue at
+https://github.com/brucecai-2001/LocoInfra/issues and the trajectories, the
+skill weights and the related features will be removed.
 
 Accordingly, all weights in this directory are made available under the Creative Commons
 Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0,

@@ -37,6 +37,8 @@ infra/bin/q1py -m apps.text2motion --package weights/dual_v3b
 infra/bin/q1py -m apps.teleop                         # 仿真：L2+A 起身，L2+B 趴下
 ```
 
+**来源**：它跟踪的两条参考轨迹重建自 Q1 运控内置的起身 / 趴下动作，增益取自厂商执行这两个动作时的增益，做法见 [应用：起身 / 趴下技能](../docs/apps.md#52-起身--趴下技能)。策略本身是我们在 SuperMimic 里从零训练的，不含厂商的策略模型。**如果这部分内容损害了厂商的权益，请在 [GitHub Issues](https://github.com/brucecai-2001/LocoInfra/issues) 联系我，我会下架。**
+
 起身 / 趴下过程中对推搡不鲁棒（1.5 m/s 时约一半摔倒），真机上务必用吊带兜住。
 
 权重只在仿真中验证。上真机前请阅读 [免责声明](../README.md#免责声明) 和 [接到真机](../docs/deployment.md#5-接到真机)。
