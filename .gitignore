@@ -24,6 +24,9 @@ q1/motor_id/data/*
 !q1/motor_id/data/.gitignore
 !q1/motor_id/data/synth_passive.npz
 
+# 宣传视频的脚本与成片（只留在本地）
+promo/
+
 # 参考库数据（由应用生成，见 apps/ref/__init__.py）
 apps/ref/*/
 !apps/ref/skills/
